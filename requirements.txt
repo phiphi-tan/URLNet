@@ -1,0 +1,3 @@
+tensorflow==1.8
+tflearn==0.3
+numpy==1.14

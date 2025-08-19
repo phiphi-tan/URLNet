@@ -1,3 +1,4 @@
+#!/bin/bash
 emb_modes=(1 2 2 3 3 4 5)
 delimit_modes=(0 0 1 0 1 1 1 )
 train_size=100000
