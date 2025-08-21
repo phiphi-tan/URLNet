@@ -1,0 +1,3 @@
+model_checkpoint_path: "/app/output/checkpoints/model-4500"
+all_model_checkpoint_paths: "/app/output/checkpoints/model-500"
+all_model_checkpoint_paths: "/app/output/checkpoints/model-4500"

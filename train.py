@@ -34,6 +34,8 @@ parser.add_argument('--data.dev_pct', type=float, default=default_dev_pct, metav
   help="percentage of training set used for dev (default: {})".format(default_dev_pct))
 parser.add_argument('--data.data_dir', type=str, default='train_10000.txt', metavar="DATADIR",
   help="location of data file")
+parser.add_argument('--data.dev_dir', type=str, default='train_10000.txt', metavar="DATADIR",
+  help="location of dev file")
 default_delimit_mode = 1 
 parser.add_argument("--data.delimit_mode", type=int, default=default_delimit_mode, metavar="DLMODE",
   help="0: delimit by special chars, 1: delimit by special chars + each char as a word (default: {})".format(default_delimit_mode))
@@ -78,6 +80,7 @@ for key, val in FLAGS.items():
   print("{}={}".format(key, val))
 
 urls, labels = read_data(FLAGS["data.data_dir"]) 
+dev_urls, dev_labels = read_data(FLAGS["data.dev_dir"]) 
 
 high_freq_words = None
 if FLAGS["data.min_word_freq"] > 0: 
@@ -104,7 +107,22 @@ print("Overall Mal/Ben split: {}/{}".format(len(pos_x), len(neg_x)))
 pos_x = np.array(pos_x) 
 neg_x = np.array(neg_x) 
 
-x_train, y_train, x_test, y_test = prep_train_test(pos_x, neg_x, FLAGS["data.dev_pct"])
+dev_pos_x = []
+dev_neg_x = []
+for i in range(len(dev_labels)):
+    dev_label = dev_labels[i] 
+    if dev_label == 1: 
+        dev_pos_x.append(i)
+    else: 
+        dev_neg_x.append(i)
+print("Overall Mal/Ben split (Dev): {}/{}".format(len(dev_pos_x), len(dev_neg_x)))
+dev_pos_x = np.array(dev_pos_x) 
+dev_neg_x = np.array(dev_neg_x) 
+
+
+# x_train, y_train, x_test, y_test = prep_train_test(pos_x, neg_x, FLAGS["data.dev_pct"])
+x_train, y_train, _, _ = prep_train_test(pos_x, neg_x, -1.0)
+_, _, x_test, y_test = prep_train_test(dev_pos_x, dev_neg_x, 0.0)
 
 x_train_char = get_ngramed_id_x(x_train, ngramed_id_x) 
 x_test_char = get_ngramed_id_x(x_test, ngramed_id_x) 

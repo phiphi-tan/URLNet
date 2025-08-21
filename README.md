@@ -1,8 +1,64 @@
-**URLNet**
-==========
+# **Training for URLNet**
 
-Introduction
-------------
+This is a fork of URLNet trained on our own data.
+Given that the dependencies are slightly outdated, the model will need to be ran via docker, and commands passed in via bash.
+
+## Instructions
+
+1. Build the docker container
+
+```
+docker build -t urlnet-train .
+```
+
+2.  Run the docker container with an interactive terminal
+
+```
+docker run -it urlnet-train
+```
+
+It may be useful to mount drives (such as `/data/` and `/output/`) as well
+
+```
+docker run -it \
+-v "<FULL_PATH_TO_REPO>/URLNet/data:/app/data" \
+-v "<FULL_PATH_TO_REPO>/URLNet/output:/app/output"\
+urlnet-train
+```
+
+3. (Training)
+   The model has already been trained, with checkpoints and dictionaries stored in `/output/`. This was the command passed to the model
+
+```
+python train.py \
+--data.data_dir /app/data/train_bag_converted.txt \
+--data.dev_dir /app/data/dev_bag_converted.txt \
+--log.output_dir /app/output/
+```
+
+4. (Testing) Inference was performed on the model using dev_bag as a testing set. This was the command passed to the model. Additional inference may be performed using a similar command.
+
+```
+python test.py \
+  --data.data_dir /app/data/old_experimentation/dev_bag_converted.txt \
+  --data.word_dict_dir /app/output/words_dict.p \
+  --data.subword_dict_dir /app/output/subwords_dict.p \
+  --data.char_dict_dir /app/output/chars_dict.p \
+  --log.checkpoint_dir /app/output/checkpoints/ \
+  --log.output_dir /app/output/test_results/results.txt
+```
+
+Afterwards, additional metrics (such as precision and recall) were obtained via
+
+```
+python auc.py \
+--input_path /app/output/test_results/ \
+--input_file results.txt
+```
+
+# **URLNet**
+
+## Introduction
 
 This is an implementation of URLNet - Learning a URL Representation with Deep
 Learning for Malicious URL Detection https://arxiv.org/abs/1802.03162
@@ -11,24 +67,21 @@ URLNet is a convolutional neural network (CNN) based model used to detect
 malicious URLs. The model exploits features of URL text string at both character
 and word levels.
 
-Resources
----------
+## Resources
 
 URLNet requires Python 3.6 and the following packages:
 
--   tensorflow 1.8
+- tensorflow 1.8
 
--   tflearn 0.3
+- tflearn 0.3
 
--   numpy 1.14
+- numpy 1.14
 
-Model Designs
--------------
+## Model Designs
 
 ![](img/URLNet.jpg)
 
-Sample Commands
----------------
+## Sample Commands
 
 In all datasets for training or testing, each line includes the label and the
 URL text string following the template:
@@ -37,22 +90,22 @@ URL text string following the template:
 
 **Example:**
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+```
 +1  http://www.exampledomain.com/urlpath/...
 
 -1  http://www.exampledomain.com/urlpath/...
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+```
 
 The URL label is either +1 (Malicious) or -1 (Benign).
 
 The model can be trained by running the following command:
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+```
 python train.py --data.data_dir <data_file_directory> --data.dev_pct 0.2 --data.delimit_mode <url_delimit_mode> --data.min_word_freq <url_min_word_freq> \
 --model.emb_mode <embedding_mode> --model.emb_dim <size_of_embedding_dimensions> --model.filter_sizes <convolutional_filter_sizes_separated_by_comma> \
 --train.nb_epochs <nb_of_training_epochs> --train.batch_size <nb_of_urls_per_batch> \
 --log.print_every <print_acc_after_this_nb_steps> --log.eval_every <evaluate_on_dev_set_after_this_nb_steps> --log.checkpoint_every <checkpoint_model_after_this_nb_steps> --log.output_dir <model_output_folder_directory>
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+```
 
 The training will save all the related word and character dictionaries into an
 output folder, and the model checkpoints are saved into `checkpoints/` folder.
@@ -60,12 +113,12 @@ By default, maximum 5 checkpoints are stored in the folder.
 
 The model can be tested by running the following command:
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+```
 python test.py --data.data_dir <data_file_directory> --data.delimit_mode <url_delimit_mode> --data.word_dict_dir <word_dictionary_directory> --data.subword_dict_dir <character_in_word_dictionary_directory> --data.char_dict_dir <character_dictionary_directory> \
 --log.checkpoint_dir <model_checkpoint_directory> --log.output_dir <test_result_directory> \
 --model.emb_mode <embedding_mode> --model.emb_dim <nb_of_embedding_dimensions> \
 --test.batch_size <nb_of_urls_per_batch>
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+```
 
 The test will save the test results for each URL, including 3 columns: `label`
 (original label), `predict` (prediction label), and `score` (softmax score). The
@@ -74,30 +127,30 @@ test dataset. If the score is more than 0.5, prediction label is +1 (Malicious).
 Else, the prediction is -1 (Benign).
 
 **Example:**
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+```
 label predict score
 1 1 0.884
 \-1 -1 0.359
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+```
 
 To obtain test metrics such as True Positive, False Positive, True Negative,
 False Negative, and the AUC curves, run the following command:
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+```
 python auc.py --input_path <test_result_directory> --input_file
 <test_result_file>
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+```
 
 The command will output the test metrics into a file with the same name as the
 `input_file` but with an `.auc` extension.
 
-Parameters
-----------
+## Parameters
 
 Training parameters include:
 
 | **Parameter**         | **Description**                                                                                                                                                                                 | **Default**     |
-|-----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
 | data.max_len_words    | The maximum number of words in a URL. The URL is either truncated or padded with a `<PADDING>` token to reach this length.                                                                      | 200             |
 | data.max_len_chars    | The maximum number of characters in a URL. The URL is either truncted or padded with a `<PADDING>` character to reach this length.                                                              | 200             |
 | data.max_len_subwords | The maximum number of characters in each word in a URL. Each word is either truncated or padded with a `<PADDING>` character to reach this length.                                              | 20              |
@@ -117,12 +170,10 @@ Training parameters include:
 | log.eval_every        | Evaluate the model on the validation set after this number of batches                                                                                                                           | 500             |
 | log.checkpoint_every  | Checkpoint the model after this number of batches. Only save the model checkpoint if the validation loss is improved.                                                                           | 500             |
 
- 
-
 Test parameters include:
 
 | **Parameter**         | **Description**                                                                                                                                                                                 | **Default**                          |
-|-----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------|
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
 | data.max_len_words    | The maximum number of words in a URL. The URL is either truncated or padded with a `<PADDING>` token to reach this length.                                                                      | 200                                  |
 | data.max_len_chars    | The maximum number of characters in a URL. The URL is either truncted or padded with a `<PADDING>` character to reach this length.                                                              | 200                                  |
 | data.max_len_subwords | The maximum number of characters in each word in a URL. Each word is either truncated or padded with a `<PADDING>` character to reach this length.                                              | 20                                   |
@@ -142,9 +193,7 @@ consistent with the trained model to get accurate test results.
 
 Refer to the file `run.sh` for example commands.
 
-Acknowledgement
----------------
+## Acknowledgement
 
 We are very grateful to our collaborators VirusTotal, for providing us access to
 their data, without which this research would not have been possible.
-
