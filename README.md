@@ -5,13 +5,13 @@ Given that the dependencies are slightly outdated, the model will need to be ran
 
 ## Instructions
 
-1. Build the docker container
+1. Build the docker image
 
 ```
 docker build -t urlnet-train .
 ```
 
-2.  Run the docker container with an interactive terminal
+2.  Run a docker container with an interactive terminal
 
 ```
 docker run -it urlnet-train
@@ -22,7 +22,7 @@ It may be useful to mount drives (such as `/data/` and `/output/`) as well
 ```
 docker run -it \
 -v "<FULL_PATH_TO_REPO>/URLNet/data:/app/data" \
--v "<FULL_PATH_TO_REPO>/URLNet/output:/app/output"\
+-v "<FULL_PATH_TO_REPO>/URLNet/output:/app/output" \
 urlnet-train
 ```
 
